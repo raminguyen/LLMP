@@ -25,15 +25,15 @@ class ChatGPT:
         base64_image = base64.b64encode(png_bytes).decode('utf-8')
 
         # OpenAI API Key
-        api_key = "***************************************"
+        api_key = "xx"
 
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
-        }
+        } 
 
         payload = {
-        "model": "gpt-4-vision-preview",
+        "model": "gpt-4o",
         "messages": [
             {
             "role": "user",
