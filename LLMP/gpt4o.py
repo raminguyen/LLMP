@@ -5,7 +5,7 @@ import numpy as np
 import base64
 import time
 
-class ChatGPT:
+class GPT4o:
     
     @staticmethod
     def query(question, image):
@@ -33,7 +33,7 @@ class ChatGPT:
         } 
 
         payload = {
-        "model": "gpt-4-vision-preview",
+        "model": "gpt-4o",
         "messages": [
             {
             "role": "user",
