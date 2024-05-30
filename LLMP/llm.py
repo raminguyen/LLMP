@@ -6,7 +6,7 @@ import base64
 import time
 
 class LLM:
-    api_key = "sk-proj-Tiif7GVm8pEVZlFGCgfmT3BlbkFJffTVTsj2L82BiNB9AlJ2"
+    api_key = ""
 
     @staticmethod
     def query(question, image, model_name):
