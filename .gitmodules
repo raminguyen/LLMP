@@ -2,8 +2,8 @@
     path = LLMP/LLaVA
         url = git@github.com:haehn/LLaVA.git
 
-        [submodule "LLMP/customLLaVA"]
-            path = LLMP/customLLaVA
-                url = https://github.com/haehn/LLaVA.git
+[submodule "LLMP/customLLaVA"]
+    path = LLMP/customLLaVA
+        url = https://github.com/haehn/LLaVA.git
                 
 
