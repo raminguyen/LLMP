@@ -220,4 +220,4 @@ dependencies:
   - zlib=1.2.13=h5eee18b_0
   - zstd=1.5.5=hc292b87_0
   - pip:
-prefix: /home/d/miniconda3/envs/LLMP
+prefix: /home/kenichi.maeda001/anaconda3/envs/LLMP
