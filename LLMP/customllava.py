@@ -16,9 +16,9 @@ class CustomLLaVA:
         grayscale[image==1] = 0
         png_image = png.from_array(grayscale, 'L')
         
-        MODEL_PATH = "../LLMP/customLLaVA/llava/checkpoints/llava-v1.5-7b-lora"       
+        MODEL_PATH = "../LLMP/LLaVA/llava/checkpoints/llava-v1.5-7b-lora"       
         MODEL_BASE = "liuhaotian/llava-v1.5-7b"
-        PYTHON_SCRIPT = "../LLMP/customLLaVA/llava/eval/run_llava.py"
+        PYTHON_SCRIPT = "../LLMP/LLaVA/llava/eval/run_llava.py"
         QUERY = question
 
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmpfile:
@@ -51,12 +51,12 @@ class CustomLLaVA:
                     
                     # Get the captured output and errors
                     captured_output = output_capture.getvalue().strip()
-                    captured_errors = error_capture.getvalue().strip()
+                    #captured_errors = error_capture.getvalue().strip()
 
                 # Check if there were any errors
-                if captured_errors:
-                    print(f"Errors occurred:\n{captured_errors}")
-                    return None
+                #if captured_errors:
+                    #print(f"Errors occurred:\n{captured_errors}")
+                    #return None
 
                 # Process the output
                 output_lines = captured_output.split('\n')
