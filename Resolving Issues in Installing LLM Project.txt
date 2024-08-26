@@ -1,0 +1,16 @@
+Resolving Issues in Installing the LLM Project
+
+- Initial Errors and Setup: I encountered several errors during the installation of the LLM project, primarily due to compatibility issues between CUDA and PyTorch. CUDA 11.0 is compatible with PyTorch version 2.0.1, so I installed it using the following command:
+conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=11.0 -c pytorch
+
+- Dependency Mismatch: In Haotian's LLaVA GitHub repository, the dependencies listed in the pyproject.toml file did not match those in our Chimera virtual environment. To resolve this, I compared the pyproject.toml file with Kenichi's file to identify the correct dependency versions.
+
+Virtual Environment Setup: 
+
+- Initially, I created my virtual environment manually, without using a YML file. I started by installing Torch and PyTorch, then cloned the LLMP LLaVA repository directly into the environment. After that, I installed additional required packages like scikit-image, protobuf, and pypng. Following these installations, all models ran successfully.
+
+CustomLLaVA Update: 
+
+- I began by fine-tuning the images datasets and integrating it with the LLaVA folder to run CustomLLaVA. I also switched the attention mechanism from Flash Attention to Eager Attention because our CUDA 11.0 does not support Flash Attention. I believe Eager Attention will work fine as it’s a standard operation in PyTorch. Given that we’re working with a small fine-tuned dataset, I think Eager Attention is sufficient, making the Flash Attention feature unnecessary.
+
+
