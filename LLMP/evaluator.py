@@ -1,24 +1,22 @@
-import LLMP as L
+import torch
 import re
 import time
 import numpy as np
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_absolute_error
-import torch
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 class Evaluator:
 
     @staticmethod
     def calculate_mse(gt, answers):
-        gt_array = np.array(gt)
-        answers_array = np.array(answers)
+        gt_array = np.array(gt).flatten()  # Flatten to ensure 1D array
+        answers_array = np.array(answers).flatten()  # Flatten to ensure 1D array
         return mean_squared_error(gt_array, answers_array)
 
     @staticmethod
     def calculate_mlae(gt, answers):
-        gt_array = np.array(gt)
-        answers_array = np.array(answers)
-        mlae = np.log2(mean_absolute_error(gt_array * 100, answers_array * 100) + .125)
+        gt_array = np.array(gt).flatten()  # Flatten to ensure 1D array
+        answers_array = np.array(answers).flatten()  # Flatten to ensure 1D array
+        mlae = np.log2(mean_absolute_error(gt_array * 100, answers_array * 100) + 0.125)
         return mlae
 
     @staticmethod
@@ -30,12 +28,30 @@ class Evaluator:
         return np.std(answers)
 
     @staticmethod
+    def parse_answer(answer):
+        pattern = r'(?<![\d\w*.-])\d+(?:\.\d+)?(?:-(?:\d+(?:\.\d+)?))?(?![\d\w*.-])'
+        matches = re.findall(pattern, answer)
+        ranges_numbers = []
+
+        for match in matches:
+            if '-' in match:
+                ranges_numbers.extend(match.split('-'))
+                ranges_numbers = ranges_numbers[-2:]
+            else:
+                ranges_numbers.append(match)
+        
+        if len(ranges_numbers) == 0:
+            return []
+        
+        return [float(r) for r in ranges_numbers]
+
+    @staticmethod
     def run(data, query, models):
         images = [d[0] for d in data]
         gt = [d[1] for d in data]
         results = {'gt': gt}
 
-        for model_name in models:
+        for model_name, model_instance in models.items():
             raw_answers = []
             parsed_answers = []
             forced_repetitions = 0
@@ -47,58 +63,39 @@ class Evaluator:
                 start_time = time.time()
 
                 while not FLAG:
-                    answer = ""
-                    if model_name == "LLaVA":
-                        answer = L.LLaVA.query(query, image)
-                    elif model_name == "ChatGPT":
-                        answer = L.ChatGPT.query(query, image)
-                    elif model_name == "CustomLLaVA":
-                        answer = L.CustomLLaVA.query(query, image)
-                    else:
-                        raise ValueError(f"Unknown model_name: {model_name}")
+                    answer = model_instance.query(query, image)
 
-                    pattern = r'(?<![\d\w*.-])\d+(?:\.\d+)?(?:-(?:\d+(?:\.\d+)?))?(?![\d\w*.-])'
-                    # Add this check
-                    if not isinstance(answer, str):
-                        answer = str(answer)
-                        
-                    matches = re.findall(pattern, answer)
+                    ranges_numbers = Evaluator.parse_answer(answer)
 
-                    if matches:
-                        ranges_numbers = []
-                        FLAG = 0
-                        for match in matches:
-                            if '-' in match:
-                                FLAG = 1
-                                ranges_numbers.extend(match.split('-'))
-                                ranges_numbers = ranges_numbers[-2:]
-                            else:
-                                ranges_numbers.append(match)
-                        if FLAG == 0:
-                            ranges_numbers = ranges_numbers[-1:]
-                        ranges_numbers = [float(r) for r in ranges_numbers]
-
+                    if len(ranges_numbers) > 0:
                         raw_answers.append(answer)
                         parsed_answers.append(ranges_numbers)
                         FLAG = True
                         end_time = time.time()
                         times.append((end_time - start_time) * 1000)
-                        if model_name == "ChatGPT":
-                            time.sleep(5)  # Avoid hitting rate limits!
                     else:
                         forced_repetitions += 1
-                        if model_name == "ChatGPT":
-                            time.sleep(5)  # Avoid hitting rate limits!
+
+            if len(parsed_answers) == 0:
+                parsed_answers = [[0] for _ in images]
 
             midpoints = [(sum(sublist) / 2) if len(sublist) > 1 else sublist[0] for sublist in parsed_answers]
 
-            mse = Evaluator.calculate_mse(gt, midpoints)
-            mlae = Evaluator.calculate_mlae(gt, midpoints)
-            mean = Evaluator.calculate_mean(midpoints)
-            std = Evaluator.calculate_std(midpoints)
+            # Ensure that both gt and predictions are consistent in length
+            if isinstance(gt, (float, int, np.float64)):  # Check for single float or integer
+                gt = [[gt]]  # Convert single float or integer to list of lists
+            elif isinstance(gt, list) and isinstance(gt[0], (float, int, np.float64)):
+                gt = [[value] for value in gt]  # Convert flat list of floats or integers to list of lists
+
+            gt_flat = [item for sublist in gt for item in sublist]  # Flatten ground truth
+            midpoints_flat = (midpoints * (len(gt_flat) // len(midpoints) + 1))[:len(gt_flat)]  # Replicate and slice
+
+            mse = Evaluator.calculate_mse(gt_flat, midpoints_flat)
+            mlae = Evaluator.calculate_mlae(gt_flat, midpoints_flat)
+            mean = Evaluator.calculate_mean(midpoints_flat)
+            std = Evaluator.calculate_std(midpoints_flat)
 
             results[model_name] = {
-                'parameters': None,
                 'raw_answers': raw_answers,
                 'parsed_answers': parsed_answers,
                 'mean': mean,
